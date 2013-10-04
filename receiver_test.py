@@ -11,8 +11,8 @@ channel = connection.channel()
 '''
 connhelper = ConnHelper()
 
-# declaring a new queue
-connhelper.register_queue()
+connhelper.register_exchange()
+connhelper.bind_queue_exchange()
 
 print "[*] Waiting for message..."
 

@@ -11,11 +11,11 @@ channel = connection.channel()
 '''
 connhelper = ConnHelper()
 
-# declaring a new queue
-connhelper.register_queue()
+connhelper.register_exchange()
+connhelper.bind_queue_exchange()
 
 def publish(text):
-	connhelper.publish_message(body=text)
+	connhelper.send_message(body=text)
 	print "[x] sent %s" % text
 
 text = raw_input('Send message : ')
