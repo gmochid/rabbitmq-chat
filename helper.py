@@ -1,9 +1,15 @@
 import pika
 
 class ConnHelper(object):
-	def __init__(self, _host="localhost"):
-		self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=_host))
+	count_object = 0
+
+	def __init__(self, host="localhost", nickname="Farthen Dur"):
+		self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
 		self._channel = self._connection.channel()
+		self._id = '027-%d' % ConnHelper.count_object
+		self._nickname = nickname
+
+		ConnHelper.count_object += 1
 
 	# getter and setter connection
 	def get_conn(self):
@@ -22,6 +28,24 @@ class ConnHelper(object):
 	def del_ch(self):
 		del self._channel
 	channel = property(get_ch, set_ch, del_ch, "Channel Properties")
+
+	# getter and setter id
+	def get_id(self):
+		return self._id
+	def set_id(self, value):
+		self._id = value
+	def del_id(self):
+		del self._id
+	id = property(get_id, set_id, del_id, "ID Properties")
+
+	# getter and setter nickname
+	def get_nick(self):
+		return self._nickname
+	def set_nick(self, value):
+		self._nickname = value
+	def del_nick(self):
+		del self._nickname
+	nickname = property(get_nick, set_nick, del_nick, "Nickname Properties")
 
 	def register_queue(self, queue_name='027-hello'):
 		self._channel.queue_declare(queue_name)
