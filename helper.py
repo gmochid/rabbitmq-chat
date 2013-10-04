@@ -70,8 +70,7 @@ class ConnHelper(object):
 		self._channel.basic_consume(callback, queue=self._id, no_ack=no_ack)
 
 	def bind_queue_exchange(self, exchange_name='hello'):
-		print '-- 027-%s' % exchange_name
-		self.register_exchange('027-%s' % exchange_name)
+		self.register_exchange(exchange_name)
 		self._channel.queue_bind(exchange='027-%s' % exchange_name, queue=self._id)
 		ConnHelper.exchange_list.append(exchange_name)
 
@@ -85,7 +84,6 @@ class ConnHelper(object):
 			self.send_message(exchange_name=exchange, body=body)
 
 	def send_message(self, exchange_name='hello', body='Hello World!!'):
-		print '-- 027-%s' % exchange_name
 		self._channel.basic_publish(exchange='027-%s' % exchange_name, routing_key='', body='[%s] (%s) %s' % (exchange_name, self._nickname, body))
 
 	def start_consuming(self):
