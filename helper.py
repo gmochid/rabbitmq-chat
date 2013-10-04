@@ -2,6 +2,7 @@ import pika
 
 class ConnHelper(object):
 	count_object = 0
+	exchange_list = []
 
 	def __init__(self, host="localhost", nickname="Farthen Dur"):
 		self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
@@ -10,6 +11,9 @@ class ConnHelper(object):
 		self._nickname = nickname
 
 		ConnHelper.count_object += 1
+
+		self.register_queue()
+
 
 	# getter and setter connection
 	def get_conn(self):
@@ -47,14 +51,30 @@ class ConnHelper(object):
 		del self._nickname
 	nickname = property(get_nick, set_nick, del_nick, "Nickname Properties")
 
-	def register_queue(self, queue_name='027-hello'):
-		self._channel.queue_declare(queue_name)
+	def register_exchange(self, exchange_name='027-hello'):
+		self._channel.exchange_declare(exchange=exchange_name, type='fanout')
 
-	def publish_message(self, exchange='', queue_name='027-hello', body='Hello World!!'):
-		self._channel.basic_publish(exchange=exchange, routing_key=queue_name, body=body)
+	def register_queue(self):
+		self._channel.queue_declare(self._id)
 
-	def register_listener(self, callback, queue_name='027-hello', no_ack=True):
-		self._channel.basic_consume(callback, queue=queue_name, no_ack=no_ack)
+	def register_listener(self, callback, no_ack=True):
+		self._channel.basic_consume(callback, queue=self._id, no_ack=no_ack)
+
+	def bind_queue_exchange(self, exchange_name='027-hello'):
+		self.register_exchange(exchange_name)
+		self._channel.queue_bind(exchange=exchange_name, queue=self._id)
+		ConnHelper.exchange_list.append(exchange_name)
+
+	def unbind_queue_exchange(self, exchange_name='027-hello'):
+		self._channel.queue_unbind(exchange=exchange_name, queue=self._id)
+		ConnHelper.exchange_list.remove(exchange_name)
+
+	def publish_message(self, body='Hello World!!'):
+		for exchange in ConnHelper.exchange_list:
+			send_message(exchange, body)
+
+	def send_message(self, exchange_name='027-hello', body='Hello World!!'):
+		self._channel.basic_publish(exchange=exchange_name, routing_key=exchange_name, body='[%s] (%s) %s' % (exchange_name, self._nickname, body))
 
 	def start_consuming(self):
 		self._channel.start_consuming()
