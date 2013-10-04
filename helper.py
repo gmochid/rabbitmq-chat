@@ -1,16 +1,25 @@
 import pika
+import random
+import re
+import string
+
+VOWEL = 'aiueo'
+CONSONANT = 'bcdfghjklmnpqrstvwxyz'
 
 class ConnHelper(object):
-	count_object = 0
 	exchange_list = []
+	
+
+	'''
+	TODO:
+	1. Listening task should be at different thread
+	'''
 
 	def __init__(self, host="localhost", nickname="Farthen Dur"):
 		self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
 		self._channel = self._connection.channel()
-		self._id = '027-%d' % ConnHelper.count_object
+		self._id = '027-%s' % self.get_random_nick()
 		self._nickname = nickname
-
-		ConnHelper.count_object += 1
 
 		self.register_queue()
 
@@ -51,8 +60,8 @@ class ConnHelper(object):
 		del self._nickname
 	nickname = property(get_nick, set_nick, del_nick, "Nickname Properties")
 
-	def register_exchange(self, exchange_name='027-hello'):
-		self._channel.exchange_declare(exchange=exchange_name, type='fanout')
+	def register_exchange(self, exchange_name='hello'):
+		self._channel.exchange_declare(exchange='027-%s' % exchange_name, type='fanout')
 
 	def register_queue(self):
 		self._channel.queue_declare(self._id)
@@ -60,24 +69,34 @@ class ConnHelper(object):
 	def register_listener(self, callback, no_ack=True):
 		self._channel.basic_consume(callback, queue=self._id, no_ack=no_ack)
 
-	def bind_queue_exchange(self, exchange_name='027-hello'):
-		self.register_exchange(exchange_name)
-		self._channel.queue_bind(exchange=exchange_name, queue=self._id)
+	def bind_queue_exchange(self, exchange_name='hello'):
+		print '-- 027-%s' % exchange_name
+		self.register_exchange('027-%s' % exchange_name)
+		self._channel.queue_bind(exchange='027-%s' % exchange_name, queue=self._id)
 		ConnHelper.exchange_list.append(exchange_name)
 
-	def unbind_queue_exchange(self, exchange_name='027-hello'):
-		self._channel.queue_unbind(exchange=exchange_name, queue=self._id)
+	def unbind_queue_exchange(self, exchange_name='hello'):
+		self._channel.queue_unbind(exchange='027-%s' % exchange_name, queue=self._id)
 		ConnHelper.exchange_list.remove(exchange_name)
 
 	def publish_message(self, body='Hello World!!'):
 		for exchange in ConnHelper.exchange_list:
-			send_message(exchange, body)
+			print exchange
+			self.send_message(exchange_name=exchange, body=body)
 
-	def send_message(self, exchange_name='027-hello', body='Hello World!!'):
-		self._channel.basic_publish(exchange=exchange_name, routing_key=exchange_name, body='[%s] (%s) %s' % (exchange_name, self._nickname, body))
+	def send_message(self, exchange_name='hello', body='Hello World!!'):
+		print '-- 027-%s' % exchange_name
+		self._channel.basic_publish(exchange='027-%s' % exchange_name, routing_key='', body='[%s] (%s) %s' % (exchange_name, self._nickname, body))
 
 	def start_consuming(self):
 		self._channel.start_consuming()
 
 	def close_connection(self):
 		self._connection.close()
+
+	def get_random_nick(self):
+		nick = ''
+		for i in range(random.randint(6, 10)):
+			nick += VOWEL[random.randint(0, len(VOWEL) - 1)]
+			nick += CONSONANT[random.randint(0, len(CONSONANT) - 1)]
+		return nick
