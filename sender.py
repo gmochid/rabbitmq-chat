@@ -5,29 +5,43 @@ from helper import ConnHelper
 # log configuration
 logging.basicConfig()
 
-# create connection to server
-connhelper = ConnHelper()
+def changeNickname(client, new_nickname):
+	client.nickname(new_nickname)
 
-def createUser():
-	print 'Not yet implemented'
+def joinGroup(client, group_name):
+	client.bind_queue_exchange(group_name)
 
-def changeNickname():
-	print 'Not yet implemented'
+def leaveGroup(client, group_name):
+	client.unbind_queue_exchange(group_name)
 
-def joinGroup():
-	print 'Not yet implemented'
+def sendChatToAllGroup(client, body):
+	client.publish_message(body)
 
-def leaveGroup():
-	print 'Not yet implemented'
+def sendChatToGroup(client, group_name, body):
+	client.send_message(group_name, body)
 
-def sendChatToAllGroup():
-	print 'Not yet implemented'
-
-def sendChatToGroup():
-	print 'Not yet implemented'
+def callbackIncomingChat(ch, method, properties, body):
+	print body
 
 if __name__ == '__main__':
-	user_input = raw_input('>> ')
+	
+	client = ConnHelper()
+	client.register_listener(callbackIncomingChat)
+
+	user_input = raw_input('')
+
 	while user_input != '/EXIT':
 		params = user_input.split(' ')
-		user_input = raw_input('>> ')
+
+		if params[0] == '/NICK':
+			changeNickname(client, params[1:])
+		elif params[0] == '/JOIN':
+			joinGroup(client, params[1])
+		elif params[0] == '/LEAVE':
+			leaveGroup(client, params[1])
+		elif params[0][0] == '@':
+			sendChatToGroup(client, string.replace(params[0], '@', ''), params[1:])
+		else:
+			sendChatToAllGroup(client, params)
+
+		user_input = raw_input('')
