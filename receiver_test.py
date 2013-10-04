@@ -12,7 +12,7 @@ channel = connection.channel()
 connhelper = ConnHelper()
 
 connhelper.register_exchange()
-connhelper.bind_queue_exchange()
+connhelper.bind_queue_exchange('PRO')
 
 print "[*] Waiting for message..."
 
