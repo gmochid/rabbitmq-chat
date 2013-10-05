@@ -1,3 +1,4 @@
+import thread
 import pika
 import logging
 from helper import ConnHelper
@@ -21,12 +22,13 @@ def sendChatToGroup(client, group_name, body):
 	client.send_message(group_name, body)
 
 def callbackIncomingChat(ch, method, properties, body):
-	print body
+	print " >> %s" % body
 
 if __name__ == '__main__':
 	
 	client = ConnHelper()
 	client.register_listener(callbackIncomingChat)
+	thread.start_new_thread(client.start_consuming, ())
 
 	print " [*] Created user with id = %s and nickname = %s" % (client.id, client.nickname)
 
